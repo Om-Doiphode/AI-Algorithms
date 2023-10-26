@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 vector<char>alphabets={'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k','l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u','v', 'w', 'x', 'y', 'z'};
-void printVector(vector<char>v)
+void printVector(vector<int>v)
 {
     for(auto ele:v)
         cout<<ele<<" ";
@@ -17,6 +17,14 @@ void print2DVector(vector<vector<char>>v)
         }
         cout<<endl;
     }
+}
+void printProblem(vector<tuple<char,char,char>>problem)
+{
+    for(auto tup:problem)
+    {
+        cout<<get<0>(tup)<<" "<<get<1>(tup)<<" "<<get<2>(tup)<<" | ";
+    }
+    cout<<endl;
 }
 void combinations(int ind,vector<char>&arr,vector<char>&ds,int k,int n,vector<tuple<char,char,char>>&ans)
 {
@@ -82,27 +90,159 @@ tuple<vector<char>,vector<vector<tuple<char, char, char>>>> makeProblem(int n, i
     return tuple<vector<char>,vector<vector<tuple<char, char, char>>>> (variables,problems);
     
 }
+
+map<char,int> assignment(vector<char> variables,int n)
+{
+    vector<int>forPositive,forNegative,assign;
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<int> distribution(0,1);
+
+    for(int i=0;i<n;i++)
+    {
+        int randVal=distribution(gen);
+        forPositive.push_back(randVal);
+    }
+
+    for(int i=0;i<n;i++)
+    {
+        forNegative.push_back(abs(1-forPositive[i]));
+    }
+
+    for(int i=0;i<n;i++)
+    {
+        assign.push_back(forPositive[i]);
+    }
+    for(int i=0;i<n;i++)
+    {
+        assign.push_back(forNegative[i]);
+    }
+
+    map<char,int>var_assign;
+    int j=0;
+    for(auto ch: variables)
+    {
+        var_assign[ch]=assign[j++];
+    }
+
+    return var_assign;
+}
+
+int solve(vector<tuple<char, char, char>> problem, map<char,int>assign)
+{
+    int count=0;
+    for(auto sub: problem)
+    {
+        if(assign[get<0>(sub)]==1 ||assign[get<1>(sub)]==1 || assign[get<2>(sub)]==1)
+        {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+tuple<map<char,int>,int,string> hillClimbing(vector<tuple<char,char,char>>problem, map<char,int>assign,int parentNum,int received,int step)
+{
+    map<char,int> b_A=assign;
+    vector<char>a_Keys;
+    vector<int>a_Values;
+    for(auto it:b_A)
+    {
+        a_Values.push_back(it.second);
+        a_Keys.push_back(it.first);
+    }
+
+    int maxNum=parentNum;
+    map<char,int>maxAssign=assign;
+    map<char,int>editAssign=assign;
+
+
+    for(int i=0;i<a_Values.size();i++)
+    {
+        step+=1;
+        editAssign[a_Keys[i]]=abs(a_Values[i]-1);
+        int c=solve(problem,editAssign);
+
+        if(maxNum<c)
+        {
+            received=step;
+            maxNum=c;
+            maxAssign=editAssign;
+        }
+    }
+
+    if(maxNum==parentNum)
+    {
+        string s=to_string(received)+"/"+to_string(step-a_Values.size());
+
+        return tuple<map<char,int>,int,string>(b_A,maxNum,s);
+    }
+
+    else
+    {
+        parentNum=maxNum;
+        map<char,int> bestassign=maxAssign;
+        return hillClimbing(problem,bestassign,parentNum,received,step);
+    }
+}
 int main()
 {
-    int n,m,k=3;
-    cout<<char(toupper('a'))<<endl;
-    cout<<"Enter the number of clauses in the formula: ";
-    cin>>m;
+    int n=4,m=4,k=3;
+    // cout<<"Enter the number of clauses in the formula: ";
+    // cin>>m;
 
-    cout<<"Enter number of variables: ";
-    cin>>n;
+    // cout<<"Enter number of variables: ";
+    // cin>>n;
 
 
     tuple<vector<char>,vector<vector<tuple<char, char, char>>>> result=makeProblem(n,m,k);
 
     vector<char> variables=get<0>(result);
     vector<vector<tuple<char, char, char>>>problems=get<1>(result);
-    printVector(variables);
 
-    for (const vector<tuple<char, char, char>>& problem : problems) {
-        for (const tuple<char, char, char>& tuple : problem) {
-            cout << get<0>(tuple) << ' ' << get<1>(tuple) << ' ' << get<2>(tuple) << " | ";
+    map<char,int> assign=assignment(variables,n);
+    cout<<"Initial assignment: ";
+    cout<<"{ ";
+        for(auto it:assign)
+        {
+            cout<<it.first<<": "<<it.second<<", ";
         }
-        cout << endl;
+        cout<<"}"<<endl;
+
+
+    vector<map<char,int>> h_Assigns;
+    vector<map<char,int>> assigns;
+    vector<int> h_n,initials;
+    vector<string>hill_penetrations;
+    int i=0;
+
+    for(auto problem:problems)
+    {
+        i+=1;
+        int initial=solve(problem,assign);
+        tuple<map<char,int>,int,string> results=hillClimbing(problem,assign,initial,1,1);
+        auto b_A=get<0>(results);
+        auto score=get<1>(results);
+        auto hp=get<2>(results);
+
+        h_Assigns.push_back(b_A);
+        assigns.push_back(assign);
+        h_n.push_back(score);
+        initials.push_back(initial);
+        hill_penetrations.push_back(hp);
+
+        cout<<"Problem "<<i<<": ";
+        printProblem(problem);
+
+        cout<<"Hill Climbing: ";
+        cout<<"{ ";
+        for(auto it:b_A)
+        {
+            cout<<it.first<<": "<<it.second<<", ";
+        }
+        cout<<"}"<<endl;
+
+        cout<<"Penetrance: "<<hp<<endl;
     }
 }
