@@ -3,6 +3,8 @@
         "*.embeddedhtml": "html",
         "*.tcc": "cpp",
         "string": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "utility": "cpp",
+        "iostream": "cpp"
     }
 }

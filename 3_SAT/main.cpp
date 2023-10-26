@@ -18,11 +18,14 @@ void print2DVector(vector<vector<char>>v)
         cout<<endl;
     }
 }
-void printProblem(vector<tuple<char,char,char>>problem)
+void printProblem(vector<tuple<char,char,char>>problem,int m)
 {
+    int i=0;
     for(auto tup:problem)
     {
-        cout<<get<0>(tup)<<" "<<get<1>(tup)<<" "<<get<2>(tup)<<" | ";
+        cout<<"("<<get<0>(tup)<<" v "<<get<1>(tup)<<" v "<<get<2>(tup)<<")";
+        if((i++)<m-1)
+            cout<<" ^ ";
     }
     cout<<endl;
 }
@@ -186,6 +189,79 @@ tuple<map<char,int>,int,string> hillClimbing(vector<tuple<char,char,char>>proble
         return hillClimbing(problem,bestassign,parentNum,received,step);
     }
 }
+
+pair<map<char,int>,string> beamSearch(vector<tuple<char,char,char>>problem, map<char,int>assign,int b, int stepSize)
+{
+    vector<char>a_Keys;
+    vector<int>a_Values;
+    vector<int>steps,p_Scores;
+    vector<map<char,int>>p_Assigns;
+
+    for(auto it:assign)
+    {
+        a_Values.push_back(it.second);
+        a_Keys.push_back(it.first);
+    }
+
+    map<char,int>editAssign=assign;
+    int initial=solve(problem,assign);
+
+    if(initial==problem.size())
+    {
+        string p=to_string(stepSize)+"/"+to_string(stepSize);
+        return {assign,p};
+    }
+    while(stepSize<b)
+    {
+        
+        for(int i=0;i<a_Values.size();i++)
+        {
+            stepSize+=1;
+            editAssign[a_Keys[i]]=abs(a_Values[i]-1);
+            int c=solve(problem,editAssign);
+            p_Assigns.push_back(editAssign);
+            p_Scores.push_back(c);
+            steps.push_back(stepSize);
+        }
+
+        for(int i=0;i<p_Scores.size();i++)
+        {
+            if(problem.size()==p_Scores[i])
+            {
+                vector<int>index;
+                for(int j=0;j<p_Scores.size();j++)
+                {
+                    index.push_back(j);
+                }
+
+                string p=to_string(steps[index[0]])+"/"+to_string(steps[steps.size()-2]);
+
+                return {p_Assigns[index[0]],p};
+            }
+
+            else
+            {
+                vector<int> selected(p_Scores.size());
+                iota(selected.begin(), selected.end(), 0);
+
+                sort(selected.begin(), selected.end(), [&p_Scores](int a, int b) {
+                    return p_Scores[a] < p_Scores[b];
+                });
+
+                selected.erase(selected.begin(), selected.end() - b);
+
+                vector<map<char,int>> s_Assigns;
+                for (auto ele:selected)
+                {
+                    s_Assigns.push_back(p_Assigns[ele]);
+                }
+                assign=s_Assigns[0];
+            }
+        }
+    }
+
+    return {assign,to_string(stepSize)+"/"+to_string(stepSize)};
+}
 int main()
 {
     int n=4,m=4,k=3;
@@ -221,10 +297,10 @@ int main()
     {
         i+=1;
         int initial=solve(problem,assign);
-        tuple<map<char,int>,int,string> results=hillClimbing(problem,assign,initial,1,1);
-        auto b_A=get<0>(results);
-        auto score=get<1>(results);
-        auto hp=get<2>(results);
+        tuple<map<char,int>,int,string> HCresults=hillClimbing(problem,assign,initial,1,1);
+        auto b_A=get<0>(HCresults);
+        auto score=get<1>(HCresults);
+        auto hp=get<2>(HCresults);
 
         h_Assigns.push_back(b_A);
         assigns.push_back(assign);
@@ -233,7 +309,7 @@ int main()
         hill_penetrations.push_back(hp);
 
         cout<<"Problem "<<i<<": ";
-        printProblem(problem);
+        printProblem(problem,m);
 
         cout<<"Hill Climbing: ";
         cout<<"{ ";
@@ -243,6 +319,19 @@ int main()
         }
         cout<<"}"<<endl;
 
-        cout<<"Penetrance: "<<hp<<endl;
+        // cout<<"Penetrance: "<<hp<<endl;
+
+        auto BSresults=beamSearch(problem,assign,3,1);
+        auto h3=get<0>(BSresults);
+        auto b3s=get<1>(BSresults);
+
+        cout<<"Beam Search: ";
+        cout<<"{ ";
+        for(auto it:h3)
+        {
+            cout<<it.first<<": "<<it.second<<", ";
+        }
+        cout<<"}"<<endl;
+        cout<<endl;
     }
 }
