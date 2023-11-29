@@ -5,6 +5,9 @@
         "string": "cpp",
         "tuple": "cpp",
         "utility": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "iosfwd": "cpp",
+        "ostream": "cpp",
+        "cmath": "cpp"
     }
 }
