@@ -139,7 +139,6 @@ class Puzzle
             cout<<endl;
         }
 
-        cout<<"States explored: "<<num_explored<<endl;
 
         vector<string>action=solution.first;
         vector<pair<vector<vector<int>>,pair<int,int>>>cell=solution.second;
@@ -157,6 +156,7 @@ class Puzzle
             }
         }
         cout<<"Goal Reached!!"<<endl;
+        cout<<"States explored: "<<num_explored<<endl;
     }
     void solve()
     {

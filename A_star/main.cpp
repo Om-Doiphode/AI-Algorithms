@@ -60,7 +60,7 @@ struct CompareNodes {
     }
 };
 
-vector<Node*> AstarAlgorithm(vector<pair<int,int>>adj[],int start, int target,int V,map<int,pair<int,int>>coord)
+vector<Node*> AstarAlgorithm(vector<pair<int,int>>adj[],int start, int target,int V,map<int,pair<int,int>>coord,map<int,char>hashAlpha)
 {
     vector<Node*>nodes=initializeNodes(adj,V,coord,target);
     Node* startNode=nodes[start];
@@ -127,6 +127,17 @@ vector<Node*> AstarAlgorithm(vector<pair<int,int>>adj[],int start, int target,in
                 }
                 openList.swap(tempQueue);
             }
+            vector<Node*> currentPath = backtrackPath(neighborNode);
+            int size = currentPath.size();
+            for(auto node : currentPath)
+            {
+                size--;
+                if(size!=0)
+                    cout << hashAlpha[node->id] << " --> ";
+                else
+                    cout << hashAlpha[node->id];
+            }
+            cout << endl;
         }
     }
 
@@ -257,11 +268,19 @@ int main()
         {18,{0,6}},
         {19,{6,0}}};
 
-    vector<Node*>path=AstarAlgorithm(adj,18,6,V,coord);
+    vector<Node*>path=AstarAlgorithm(adj,18,6,V,coord,hash);
+    int size=path.size();
+    cout<<"Final Path: "<<endl;
     for(auto node:path)
     {
-        cout<<hash[node->id]<<" "<<node->f<<endl;
+        size--;
+        if(size!=0)
+        cout<<hash[node->id]<<" --> ";
+        else
+        cout<<hash[node->id];
+
     }
+    cout<<endl;
     for (Node* node : path) {
         delete node;
     }

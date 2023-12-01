@@ -171,56 +171,71 @@ class Puzzle
         cout<<"Goal Reached!!"<<endl;
         cout<<"States explored: "<<num_explored<<endl;
     }
+    
     void solve()
+{
+    Node *newNode = new Node(start, NULL, "");
+    queue<Node *> q;
+    q.push(newNode);
+
+    while (!q.empty())
     {
-        Node* newNode = new Node(start, NULL, "");
-        priority_queue<pair<int,Node*>, vector<pair<int,Node*>>, greater<pair<int,Node*>>> q;
-        q.push({0,newNode});
+        auto node = q.front();
+        q.pop();
+        num_explored++;
 
-        while(true)
+        if (goalTest(node->state.first, goal.first))
         {
-            if(q.empty())
-                throw runtime_error("No solution");
+            vector<string> actions;
+            vector<pair<vector<vector<int>>, pair<int, int>>> cells;
 
-            auto node=q.top();
-            q.pop();
-            num_explored++;
-            if(goalTest(node.second->state.first,goal.first))
+            while (node->parent != NULL)
             {
-                vector<string>actions;
-                vector<pair<vector<vector<int>>,pair<int,int>>>cells;
-
-                while(node.second->parent!=NULL)
-                {
-                    actions.push_back(node.second->action);
-                    cells.push_back(node.second->state);
-                    node.second=node.second->parent;
-                }
-
-                reverse(actions.begin(),actions.end());
-                reverse(cells.begin(),cells.end());
-                solution={actions,cells};
-                return;
+                actions.push_back(node->action);
+                cells.push_back(node->state);
+                node = node->parent;
             }
 
-            explored.push_back(node.second->state);
-            auto temp=moveGen(node.second->state);
+            reverse(actions.begin(), actions.end());
+            reverse(cells.begin(), cells.end());
+            solution = {actions, cells};
+            return;
+        }
 
-            for(int i=0;i<temp.size();i++)
+        explored.push_back(node->state);
+        auto temp = moveGen(node->state);
+
+        // Hill climbing: Choose the neighbor with the lowest heuristic value
+        int minHeuristic = INT_MAX;
+        Node *nextNode = nullptr;
+
+        for (int i = 0; i < temp.size(); i++)
+        {
+            string action = temp[i].first;
+            pair<vector<vector<int>>, pair<int, int>> state = temp[i].second;
+
+            if (does_not_contain_state(state))
             {
-                string action=temp[i].first;
-                pair<vector<vector<int>>,pair<int,int>> state=temp[i].second;
+                Node *child = new Node(state, node, action);
+                int hVal = calcHeuristic(state.first, goal.first);
 
-                if(!contains_state(q,state) && does_not_contain_state(state))
+                if (hVal < minHeuristic)
                 {
-                    Node *child=new Node(state,node.second,action);
-                    int hVal=calcHeuristic(state.first,goal.first);
-                    q.push({hVal,child});
+                    minHeuristic = hVal;
+                    nextNode = child;
                 }
             }
+        }
 
+        if (nextNode != nullptr)
+        {
+            q.push(nextNode);
         }
     }
+
+    throw runtime_error("No solution");
+}
+
 };
 
 int main()
