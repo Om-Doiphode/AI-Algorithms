@@ -10,6 +10,11 @@
         "ostream": "cpp",
         "cmath": "cpp",
         "vector": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "complex": "c",
+        "fstream": "c",
+        "system_error": "c",
+        "in.h": "c",
+        "socket.h": "c"
     }
 }
